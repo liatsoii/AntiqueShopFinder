@@ -1,0 +1,432 @@
+﻿<Window x:Class="AntiqueShopFinder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Поиск антикварных магазинов и винтажных лавок" 
+        Height="700" Width="1100"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель вкладок -->
+        <TabControl x:Name="MainTabControl" Grid.Row="0" Background="#f5f5f5" BorderThickness="0">
+            <TabItem Header="Поиск магазинов" Name="SearchTab">
+                <Border Background="#f5f5f5" Padding="10" BorderBrush="#ddd" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0" Name="SearchTextBox" 
+                                TextChanged="SearchTextBox_TextChanged"
+                                VerticalContentAlignment="Center"
+                                FontSize="14"
+                                ToolTip="Поиск по названию, адресу или описанию">
+                        </TextBox>
+
+                        <ComboBox Grid.Column="1" Name="TypeComboBox" 
+                                 SelectionChanged="TypeComboBox_SelectionChanged"
+                                 Width="150">
+                            <ComboBoxItem Content="Все типы" Tag="all" IsSelected="True"/>
+                            <ComboBoxItem Content="Антикварные" Tag="antique"/>
+                            <ComboBoxItem Content="Винтажные" Tag="vintage"/>
+                        </ComboBox>
+
+                        <ComboBox Grid.Column="2" Name="CategoryComboBox" 
+                                 SelectionChanged="CategoryComboBox_SelectionChanged"
+                                 Width="200"
+                                 ToolTip="Выберите категорию">
+                        </ComboBox>
+
+                        <!-- Кнопка сортировки -->
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="10,0,0,0">
+                            <TextBlock Text="Сортировка:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <Button Content="↓ Рейтинг" Name="SortToggleButton" Click="SortToggleButton_Click"
+                                   Background="#3498db" Foreground="White" ToolTip="По убыванию рейтинга"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="4" Content="Сбросить фильтры" 
+                               Click="ResetFilters_Click"
+                               Background="#6c757d" Foreground="White"/>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Управление магазинами" Name="AdminTab">
+                <Border Background="#f5f5f5" Padding="10" BorderBrush="#ddd" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Панель входа для администратора -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" 
+                                   x:Name="AdminLoginPanel" Visibility="Visible">
+                            <TextBlock Text="Логин:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBox Name="AdminLoginTextBox" Width="100" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Пароль:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                            <PasswordBox Name="AdminPasswordTextBox" Width="100" VerticalContentAlignment="Center"/>
+                            <Button Content="Войти" Click="AdminLoginButton_Click"
+                                   Background="#3498db" Foreground="White" Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <!-- Панель администратора после входа -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" 
+                                   x:Name="AdminPanel" Visibility="Collapsed">
+                            <TextBlock Text="Панель администратора" 
+                                      VerticalAlignment="Center"
+                                      FontWeight="SemiBold"/>
+                            <Button Content="Выйти" Click="AdminLogoutButton_Click"
+                                   Background="#e74c3c" Foreground="White" 
+                                   Margin="20,0,0,0" Padding="10,5"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" 
+                               Content="Добавить магазин" 
+                               Click="AddShopButton_Click"
+                               Background="#27ae60" 
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Padding="15,8"
+                               x:Name="AddShopButton"/>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- Основной контент -->
+        <Grid Grid.Row="1">
+            <!-- Для вкладки поиска - два столбца -->
+            <Grid x:Name="SearchGrid" Visibility="Visible">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="400"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Содержимое для вкладки поиска -->
+                <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Name="SearchScrollViewer">
+                    <ItemsControl Name="ShopsItemsControl" Margin="10">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="White" BorderBrush="#ddd" BorderThickness="1" 
+                                       Margin="0,5" Padding="15" CornerRadius="5"
+                                       MouseLeftButtonUp="ShopItem_MouseLeftButtonUp">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.1"/>
+                                    </Border.Effect>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                  Text="{Binding Name}" 
+                                                  FontWeight="Bold" FontSize="16"
+                                                  Foreground="#2c3e50"/>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Rating}" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#e67e22"/>
+                                            <TextBlock Text="★" 
+                                                      Foreground="#e67e22" 
+                                                      Margin="2,0,0,0"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                  Text="{Binding Address}" 
+                                                  Margin="0,5,0,0"
+                                                  Foreground="#7f8c8d"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                                  Text="{Binding Description}" 
+                                                  Margin="0,10,0,0"
+                                                  TextWrapping="Wrap"
+                                                  Foreground="#34495e"/>
+
+                                        <WrapPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                                  Margin="0,10,0,0">
+                                            <TextBlock Text="Тип: " 
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#2c3e50"/>
+                                            <TextBlock Text="{Binding ShopType}" 
+                                                      Margin="5,0,15,0"
+                                                      Foreground="#3498db"/>
+
+                                            <TextBlock Text="Категории: " 
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#2c3e50"/>
+                                            <TextBlock Text="{Binding Categories}" 
+                                                      TextWrapping="Wrap"
+                                                      Foreground="#27ae60"/>
+                                        </WrapPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Детальная информация для вкладки поиска -->
+                <Border Grid.Column="1" Background="#f8f9fa" BorderBrush="#ddd" BorderThickness="1,0,0,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Name="DetailsPanel" Visibility="Collapsed" Margin="15">
+
+                            <TextBlock Name="DetailName" FontSize="20" FontWeight="Bold" 
+                                      Foreground="#2c3e50" TextWrapping="Wrap"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <TextBlock Name="DetailRating" FontWeight="Bold" 
+                                          Foreground="#e67e22"/>
+                                <TextBlock Text="★" Foreground="#e67e22" Margin="2,0,0,0"/>
+                                <TextBlock Name="DetailReviewsCount" Margin="10,0,0,0" 
+                                          Foreground="#7f8c8d" FontSize="12"/>
+                            </StackPanel>
+
+                            <TextBlock Name="DetailAddress" Margin="0,10,0,0" 
+                                      Foreground="#7f8c8d" FontSize="14"/>
+
+                            <StackPanel Name="ContactPanel" Margin="0,15,0,0">
+                                <TextBlock Text="Контакты:" FontWeight="SemiBold" 
+                                          Foreground="#2c3e50"/>
+
+                                <StackPanel Name="PhonePanel" Orientation="Horizontal" Margin="0,5,0,0">
+                                    <TextBlock Text="Телефон: " FontWeight="SemiBold"/>
+                                    <TextBlock Name="DetailPhone"/>
+                                </StackPanel>
+
+                                <StackPanel Name="EmailPanel" Orientation="Horizontal" Margin="0,5,0,0">
+                                    <TextBlock Text="Email: " FontWeight="SemiBold"/>
+                                    <TextBlock Name="DetailEmail"/>
+                                </StackPanel>
+
+                                <StackPanel Name="WebsitePanel" Orientation="Horizontal" Margin="0,5,0,0">
+                                    <TextBlock Text="Сайт: " FontWeight="SemiBold"/>
+                                    <TextBlock Name="DetailWebsite"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <TextBlock Name="DetailDescription" Margin="0,15,0,0" 
+                                      TextWrapping="Wrap" TextAlignment="Justify"/>
+
+                            <StackPanel Name="CategoriesPanel" Margin="0,15,0,0">
+                                <TextBlock Text="Категории:" FontWeight="SemiBold" 
+                                          Foreground="#2c3e50"/>
+                                <TextBlock Name="DetailCategories" Margin="0,5,0,0"/>
+                            </StackPanel>
+
+                            <Border Margin="0,20,0,0" Padding="15" Background="White" 
+                                   BorderBrush="#ddd" BorderThickness="1" CornerRadius="5">
+                                <StackPanel>
+                                    <TextBlock Text="Отзывы:" FontWeight="Bold" 
+                                              FontSize="16" Foreground="#2c3e50"/>
+
+                                    <ItemsControl Name="ReviewsItemsControl" Margin="0,10,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,5" Padding="10" 
+                                                       Background="#f8f9fa" CornerRadius="3">
+                                                    <StackPanel>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding UserName}" 
+                                                                      FontWeight="SemiBold"/>
+                                                            <TextBlock Text=" - " Margin="5,0"/>
+                                                            <TextBlock Text="{Binding Rating}"/>
+                                                            <TextBlock Text="★" Foreground="#e67e22" 
+                                                                      Margin="2,0,0,0"/>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Comment}" 
+                                                                  Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                                        <TextBlock Text="{Binding ReviewDate, StringFormat='dd.MM.yyyy HH:mm'}" 
+                                                                  FontSize="10" Foreground="#7f8c8d"
+                                                                  Margin="0,5,0,0"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Border Margin="0,15,0,0" Padding="15" 
+                                           Background="#e8f4fd" CornerRadius="5">
+                                        <StackPanel>
+                                            <TextBlock Text="Добавить отзыв:" 
+                                                      FontWeight="SemiBold" 
+                                                      FontSize="14"
+                                                      Margin="0,0,0,10"
+                                                      Foreground="#2c3e50"/>
+
+                                            <!-- Поле для имени с placeholder -->
+                                            <Grid Margin="0,0,0,10">
+                                                <TextBox Name="ReviewUserName" 
+                                                        Height="35"
+                                                        Padding="8"
+                                                        VerticalContentAlignment="Center"
+                                                        GotFocus="ReviewUserName_GotFocus"
+                                                        LostFocus="ReviewUserName_LostFocus"/>
+                                                <TextBlock Name="ReviewUserNamePlaceholder" 
+                                                          Text="Введите имя"
+                                                          Foreground="#7f8c8d"
+                                                          IsHitTestVisible="False"
+                                                          Margin="8,0,0,0"
+                                                          VerticalAlignment="Center"
+                                                          FontSize="13"/>
+                                            </Grid>
+
+                                            <!-- Рейтинг -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="Оценка:" 
+                                                          FontWeight="SemiBold"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,10,0"/>
+                                                <ComboBox Name="ReviewRating" 
+                                                         Width="80"
+                                                         Height="30"
+                                                         VerticalContentAlignment="Center">
+                                                    <ComboBoxItem Content="5 ★" Tag="5" IsSelected="True"/>
+                                                    <ComboBoxItem Content="4 ★" Tag="4"/>
+                                                    <ComboBoxItem Content="3 ★" Tag="3"/>
+                                                    <ComboBoxItem Content="2 ★" Tag="2"/>
+                                                    <ComboBoxItem Content="1 ★" Tag="1"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <!-- Поле для комментария с placeholder -->
+                                            <Grid Margin="0,0,0,15">
+                                                <TextBox Name="ReviewComment" 
+                                                        AcceptsReturn="True" 
+                                                        Height="80" 
+                                                        Padding="8"
+                                                        VerticalContentAlignment="Top"
+                                                        TextWrapping="Wrap"
+                                                        GotFocus="ReviewComment_GotFocus"
+                                                        LostFocus="ReviewComment_LostFocus"/>
+                                                <TextBlock Name="ReviewCommentPlaceholder" 
+                                                          Text="Введите отзыв"
+                                                          Foreground="#7f8c8d"
+                                                          IsHitTestVisible="False"
+                                                          Margin="8,8,0,0"
+                                                          VerticalAlignment="Top"
+                                                          FontSize="13"/>
+                                            </Grid>
+
+                                            <Button Content="Добавить отзыв" 
+                                                   Click="AddReview_Click"
+                                                   Background="#3498db" 
+                                                   Foreground="White"
+                                                   Height="35"
+                                                   FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- Для вкладки администратора - один столбец на всю ширину -->
+            <ScrollViewer x:Name="AdminScrollViewer" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <ItemsControl Name="AdminShopsItemsControl" Margin="10">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="White" 
+                                   BorderBrush="#ddd" 
+                                   BorderThickness="1" 
+                                   Margin="0,5" 
+                                   Padding="15" 
+                                   CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" 
+                                                  FontWeight="Bold" 
+                                                  FontSize="16"
+                                                  Foreground="#2c3e50"/>
+                                        <TextBlock Text="{Binding Address}" 
+                                                  Foreground="#7f8c8d"
+                                                  Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding Description}" 
+                                                  Foreground="#34495e"
+                                                  Margin="0,5,0,0"
+                                                  TextWrapping="Wrap"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                            <TextBlock Text="Тип: " 
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#2c3e50"/>
+                                            <TextBlock Text="{Binding ShopType}" 
+                                                      Foreground="#3498db"
+                                                      Margin="5,0,15,0"/>
+                                            <TextBlock Text="Рейтинг: " 
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#2c3e50"/>
+                                            <TextBlock Text="{Binding Rating}" 
+                                                      Foreground="#e67e22"
+                                                      Margin="5,0,0,0"/>
+                                            <TextBlock Text="★" 
+                                                      Foreground="#e67e22" 
+                                                      Margin="2,0,15,0"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Категории: " 
+                                                  FontWeight="SemiBold"
+                                                  Foreground="#2c3e50"
+                                                  Margin="0,5,0,0"/>
+                                        <TextBlock Text="{Binding Categories}" 
+                                                  Foreground="#27ae60"
+                                                  Margin="0,2,0,0"
+                                                  TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1" 
+                                           Content="Удалить" 
+                                           Click="DeleteShopButton_Click"
+                                           Background="#e74c3c" 
+                                           Foreground="White"
+                                           Padding="10,5"
+                                           FontWeight="SemiBold"
+                                           Tag="{Binding Id}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
