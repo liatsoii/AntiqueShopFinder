@@ -63,14 +63,14 @@ namespace AntiqueShopFinder
             }
         }
 
-        // НОВЫЙ МЕТОД: Проверка уникальности названия магазина
-        private bool IsShopNameUnique(string shopName)
+        // Обработчик для запрета вставки из буфера обмена
+        private void PhoneTextBox_Pasting(object sender, DataObjectPastingEventArgs e)
         {
-            return !_existingShops.Any(shop =>
-                shop.Name.Equals(shopName.Trim(), StringComparison.OrdinalIgnoreCase));
+            // Полностью запрещаем вставку
+            e.CancelCommand();
         }
 
-        // НОВЫЙ МЕТОД: Обработчик для ввода только цифр в поле телефона
+        // Обработчик для ввода только разрешенных символов
         private void PhoneTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             // Разрешаем только цифры, пробелы, скобки, плюс и дефис
@@ -82,6 +82,13 @@ namespace AntiqueShopFinder
                     return;
                 }
             }
+        }
+
+        // НОВЫЙ МЕТОД: Проверка уникальности названия магазина
+        private bool IsShopNameUnique(string shopName)
+        {
+            return !_existingShops.Any(shop =>
+                shop.Name.Equals(shopName.Trim(), StringComparison.OrdinalIgnoreCase));
         }
 
         private void AddShopButton_Click(object sender, RoutedEventArgs e)
@@ -164,12 +171,6 @@ namespace AntiqueShopFinder
             this.Close();
         }
 
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.DialogResult = false;
-            this.Close();
-        }
-
         private void ShowError(string message)
         {
             ErrorTextBlock.Text = message;
@@ -182,12 +183,12 @@ namespace AntiqueShopFinder
         }
 
         // Обработчики для очистки ошибок при вводе
-        private void NameTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        private void NameTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ClearError();
         }
 
-        private void AddressTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        private void AddressTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             ClearError();
         }
