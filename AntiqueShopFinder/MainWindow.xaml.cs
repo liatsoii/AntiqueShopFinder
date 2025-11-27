@@ -352,7 +352,6 @@ namespace AntiqueShopFinder
                 DetailReviewsCount.Text = $"({reviews.Count} отзывов)";
                 DetailAddress.Text = shop.Address;
                 DetailDescription.Text = shop.Description ?? "Описание отсутствует";
-                DetailCategories.Text = string.Join(", ", shop.Categories);
 
                 // Контактная информация
                 SetContactVisibility(DetailPhone, shop.Phone, PhonePanel);
@@ -365,6 +364,17 @@ namespace AntiqueShopFinder
                     DetailEmail.Text = shop.Email;
                 if (!string.IsNullOrEmpty(shop.Website))
                     DetailWebsite.Text = shop.Website;
+
+                // Категории - исправленное отображение
+                if (shop.Categories != null && shop.Categories.Count > 0)
+                {
+                    DetailCategoriesItemsControl.ItemsSource = shop.Categories;
+                    CategoriesPanel.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    CategoriesPanel.Visibility = Visibility.Collapsed;
+                }
 
                 ReviewsItemsControl.ItemsSource = shop.Reviews;
                 DetailsPanel.Visibility = Visibility.Visible;
